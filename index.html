@@ -31,6 +31,7 @@
         </header>
 
         <main>
+            <!-- Key Generation Controls -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
                 <div class="flex flex-col sm:flex-row items-center gap-4">
                     <label for="key-count" class="font-medium text-gray-700 whitespace-nowrap">Number of Key Pairs:</label>
@@ -52,6 +53,29 @@
                 </div>
             </div>
 
+            <!-- Standalone Key Formatter -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">BH Key Formatter</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="bh-key-input" class="block text-sm font-medium text-gray-700">BHPublicSecurityKey</label>
+                        <textarea id="bh-key-input" rows="4" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="Paste the BH Public Security Key here..."></textarea>
+                    </div>
+                    <button id="format-key-btn" class="w-full sm:w-auto bg-gray-600 text-white font-semibold py-2 px-5 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">
+                        Format Key
+                    </button>
+                </div>
+                <!-- Formatted Output Section (hidden by default) -->
+                <div id="formatted-output-container" class="hidden mt-6 pt-4 border-t">
+                     <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-lg font-semibold text-gray-800">Formatted BHPublicSecurityKey</h4>
+                        <button id="copy-formatted-key-btn" class="bg-gray-200 text-gray-700 text-sm font-medium py-1 px-3 rounded-md hover:bg-gray-300 transition">Copy Formatted Key</button>
+                    </div>
+                    <pre id="formatted-output-pre" class="p-3 bg-gray-100 text-gray-600 rounded-md text-sm font-mono key-string"></pre>
+                </div>
+            </div>
+
+            <!-- Container for generated keys -->
             <div id="results-container" class="mt-8 space-y-6">
                 <!-- Generated keys will be appended here -->
             </div>
@@ -65,6 +89,13 @@
         const escapeCheckbox = document.getElementById('escape-private-key-checkbox');
         const resultsContainer = document.getElementById('results-container');
         const spinner = document.getElementById('spinner');
+        
+        // Standalone formatter elements
+        const formatKeyBtn = document.getElementById('format-key-btn');
+        const copyFormattedKeyBtn = document.getElementById('copy-formatted-key-btn');
+        const bhKeyInput = document.getElementById('bh-key-input');
+        const formattedOutputContainer = document.getElementById('formatted-output-container');
+        const formattedOutputPre = document.getElementById('formatted-output-pre');
 
         // --- Core Functions ---
 
@@ -116,7 +147,7 @@
         }
 
         /**
-         * Creates the HTML structure to display a single key pair and its formatter.
+         * Creates the HTML structure to display a single key pair.
          */
         function displayKeyPair(index, publicKeyPem, privateKeyPem, shouldEscapePrivateKey) {
             const keyPairId = `key-pair-${index}`;
@@ -145,74 +176,11 @@
                         <div id="${keyPairId}-private" class="p-3 bg-gray-100 rounded-md text-sm text-gray-600 font-mono key-string"></div>
                     </div>
                 </div>
-
-                <!-- Key Formatter Section -->
-                <div class="mt-6 pt-4 border-t">
-                    <h4 class="text-lg font-semibold text-gray-800 mb-3">BH Key Formatter</h4>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="${keyPairId}-bh-key" class="block text-sm font-medium text-gray-700">BHPublicSecurityKey</label>
-                            <textarea id="${keyPairId}-bh-key" rows="4" class="bh-key-input mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="Paste the BH Public Security Key here..."></textarea>
-                        </div>
-                        <button class="format-key-btn w-full sm:w-auto bg-gray-600 text-white font-semibold py-2 px-5 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">
-                            Format Key
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Formatted Output Section (hidden by default) -->
-                <div class="formatted-output-container hidden mt-6 pt-4 border-t">
-                     <div class="flex justify-between items-center mb-2">
-                        <h4 class="text-lg font-semibold text-gray-800">Formatted BHPublicSecurityKey</h4>
-                        <button class="copy-formatted-key-btn bg-gray-200 text-gray-700 text-sm font-medium py-1 px-3 rounded-md hover:bg-gray-300 transition">Copy Formatted Key</button>
-                    </div>
-                    <pre class="formatted-output-pre p-3 bg-gray-100 text-gray-600 rounded-md text-sm font-mono key-string"></pre>
-                </div>
             `;
             
             card.querySelector(`#${keyPairId}-public`).textContent = finalPublicKey;
             card.querySelector(`#${keyPairId}-private`).textContent = finalPrivateKey;
             resultsContainer.appendChild(card);
-        }
-
-        /**
-         * Handles all click events within the results container.
-         */
-        function handleResultsContainerClick(e) {
-            const copyBtn = e.target.closest('.copy-btn');
-            const formatKeyBtn = e.target.closest('.format-key-btn');
-            const copyFormattedKeyBtn = e.target.closest('.copy-formatted-key-btn');
-
-            if (copyBtn) {
-                const targetId = copyBtn.dataset.targetId;
-                const keyElement = document.getElementById(targetId);
-                copyTextToClipboard(keyElement.textContent, copyBtn, "Copy");
-            }
-
-            if (formatKeyBtn) {
-                const card = formatKeyBtn.closest('.bg-white');
-                let bhPublicKey = card.querySelector('.bh-key-input').value;
-                
-                if (!bhPublicKey) {
-                    alert('Please paste the BHPublicSecurityKey into the text area first.');
-                    return;
-                }
-
-                // Apply the \r\n formatting to the user-input key
-                const formattedBhPublicKey = bhPublicKey.replace(/\n/g, '\\r\\n');
-
-                const outputContainer = card.querySelector('.formatted-output-container');
-                const preElement = outputContainer.querySelector('.formatted-output-pre');
-                
-                preElement.textContent = formattedBhPublicKey;
-                outputContainer.classList.remove('hidden');
-            }
-            
-            if (copyFormattedKeyBtn) {
-                const card = copyFormattedKeyBtn.closest('.bg-white');
-                const preElement = card.querySelector('.formatted-output-pre');
-                copyTextToClipboard(preElement.textContent, copyFormattedKeyBtn, "Copy Formatted Key");
-            }
         }
         
         /**
@@ -244,6 +212,7 @@
 
         // --- Event Listeners ---
 
+        // Listener for the main "Generate Keys" button
         generateBtn.addEventListener('click', async () => {
             const count = parseInt(keyCountInput.value, 10);
             if (isNaN(count) || count < 1) {
@@ -267,8 +236,33 @@
             spinner.classList.add('hidden');
             generateBtn.disabled = false;
         });
+        
+        // Listener for the dynamically created copy buttons for generated keys
+        resultsContainer.addEventListener('click', (e) => {
+            const copyBtn = e.target.closest('.copy-btn');
+            if (copyBtn) {
+                const targetId = copyBtn.dataset.targetId;
+                const keyElement = document.getElementById(targetId);
+                copyTextToClipboard(keyElement.textContent, copyBtn, "Copy");
+            }
+        });
 
-        resultsContainer.addEventListener('click', handleResultsContainerClick);
+        // Listener for the standalone formatter button
+        formatKeyBtn.addEventListener('click', () => {
+            let bhPublicKey = bhKeyInput.value;
+            if (!bhPublicKey) {
+                alert('Please paste the BHPublicSecurityKey into the text area first.');
+                return;
+            }
+            const formattedBhPublicKey = bhPublicKey.replace(/\n/g, '\\r\\n');
+            formattedOutputPre.textContent = formattedBhPublicKey;
+            formattedOutputContainer.classList.remove('hidden');
+        });
+
+        // Listener for the standalone formatter's copy button
+        copyFormattedKeyBtn.addEventListener('click', () => {
+            copyTextToClipboard(formattedOutputPre.textContent, copyFormattedKeyBtn, "Copy Formatted Key");
+        });
 
     </script>
 </body>
