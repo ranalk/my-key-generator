@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Processor & Comparator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #1c1e21;
+            margin: 0; /* Removed flex properties */
+        }
+        /* ADDED: Wrapper to contain the page content below the nav */
+        .page-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            min-height: calc(100vh - 60px); /* 60px is approx nav height */
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+        h1, h2 {
+            border-bottom: 1px solid #dddfe2;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h2 {
+            margin-top: 25px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: monospace;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        #inputList {
+            min-height: 200px;
+        }
+        #outputList {
+            min-height: 100px;
+            background-color: #f5f6f7;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #166fe5;
+        }
+        button.copy-btn {
+            background-color: #42b72a;
+        }
+        button.copy-btn:hover {
+            background-color: #36a420;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        #itemCount, #comparisonSummary {
+            font-size: 1.1em;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .diff-box {
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .diff-box h3 {
+            margin-top: 0;
+            font-size: 1em;
+        }
+        .diff-box ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 250px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .diff-box li {
+            padding: 4px;
+            border-radius: 3px;
+        }
+        .diff-box.added li { background-color: #e9f5e9; color: #36a420; }
+        .diff-box.removed li { background-color: #fbeae9; color: #e94f37; }
+        @media (max-width: 600px) {
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="bg-gray-800 text-white p-4 shadow-md">
+        <div class="container mx-auto flex items-center gap-6">
+            <h1 class="text-xl font-bold">My Tools</h1>
+            <a href="index.html" class="text-gray-300 hover:text-white transition-colors">
+                Key Generator
+            </a>
+            <a href="list-processor.html" class="font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
+                List Processor
+            </a>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        <div class="container">
+            <h1>List Processor & Comparator</h1>
+
+            <label for="inputList">Paste your multi-line list here:</label>
+            <textarea id="inputList" placeholder="P2_devilsfingerVF&#10;SMG_10000WishesVT&#10;SMG_108HeroesWaterMarginVF..."></textarea>
+            
+            <div class="button-group">
+                <button id="processBtn">Process List</button>
+            </div>
+
+            <div id="results" style="display: none;">
+                <h2>Results</h2>
+                <p id="itemCount">Total Items: 0</p>
+
+                <label for="outputList">Comma-Separated List:</label>
+                <textarea id="outputList" readonly></textarea>
+                <div class="button-group">
+                    <button id="copyBtn" class="copy-btn">Copy to Clipboard</button>
+                </div>
+
+                <h2>Comparison with Previous List</h2>
+                <p id="comparisonSummary">This is the first list processed.</p>
+                <div class="comparison-container">
+                    <div class="diff-box added">
+                        <h3>Items Added</h3>
+                        <ul id="addedItems"></ul>
+                    </div>
+                    <div class="diff-box removed">
+                        <h3>Items Removed</h3>
+                        <ul id="removedItems"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <script>
+        let previousListItems = [];
+
+        const processBtn = document.getElementById('processBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        
+        const inputListEl = document.getElementById('inputList');
+        const outputListEl = document.getElementById('outputList');
+        const itemCountEl = document.getElementById('itemCount');
+        const resultsEl = document.getElementById('results');
+
+        const comparisonSummaryEl = document.getElementById('comparisonSummary');
+        const addedItemsEl = document.getElementById('addedItems');
+        const removedItemsEl = document.getElementById('removedItems');
+
+        // Helper function to render a list of items into a <ul>
+        function populateList(element, items) {
+            element.innerHTML = ''; // Clear previous results
+            if (items.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'None';
+                li.style.backgroundColor = 'transparent';
+                li.style.color = '#606770';
+                element.appendChild(li);
+            } else {
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    element.appendChild(li);
+                });
+            }
+        }
+        
+        processBtn.addEventListener('click', () => {
+            const rawText = inputListEl.value;
+            
+            // 1. Process the input list
+            const currentListItems = rawText
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line !== '');
+
+            // 2. Generate comma-separated list and update count
+            outputListEl.value = currentListItems.join(',');
+            itemCountEl.textContent = `Total Items: ${currentListItems.length}`;
+            
+            // 3. Compare with the previous list
+            const currentSet = new Set(currentListItems);
+            const previousSet = new Set(previousListItems);
+
+            const added = currentListItems.filter(item => !previousSet.has(item));
+            const removed = previousListItems.filter(item => !currentSet.has(item));
+
+            // 4. Display comparison results
+            if (previousListItems.length === 0 && currentListItems.length > 0) {
+                comparisonSummaryEl.textContent = `First run: ${currentListItems.length} items loaded.`;
+            } else {
+                comparisonSummaryEl.textContent = `Found ${added.length} new item(s) and ${removed.length} removed item(s).`;
+            }
+            
+            populateList(addedItemsEl, added);
+            populateList(removedItemsEl, removed);
+
+            // 5. Update state for the next run
+            previousListItems = currentListItems;
+            
+            // 6. Show the results section
+            resultsEl.style.display = 'block';
+        });
+
+        copyBtn.addEventListener('click', () => {
+            if (outputListEl.value) {
+                navigator.clipboard.writeText(outputListEl.value).then(() => {
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy to Clipboard';
+                    }, 2000);
+                }).catch(err => {
+                    alert('Failed to copy text.');
+                });
+            }
+        });
+
+    </script>
+</body>
+</html>
