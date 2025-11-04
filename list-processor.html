@@ -5,134 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>List Processor & Comparator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* All styling is now done with Tailwind, except for the body font */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            color: #1c1e21;
-            margin: 0; /* Removed flex properties */
+            font-family: 'Inter', sans-serif;
         }
-        /* ADDED: Wrapper to contain the page content below the nav */
-        .page-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-            min-height: calc(100vh - 60px); /* 60px is approx nav height */
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 800px;
-        }
-        h1, h2 {
-            border-bottom: 1px solid #dddfe2;
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-        h2 {
-            margin-top: 25px;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #dddfe2;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: monospace;
-            box-sizing: border-box;
-            resize: vertical;
-        }
-        #inputList {
-            min-height: 200px;
-        }
-        #outputList {
-            min-height: 100px;
-            background-color: #f5f6f7;
-        }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        button {
-            background-color: #1877f2;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        button:hover {
-            background-color: #166fe5;
-        }
-        button.copy-btn {
-            background-color: #42b72a;
-        }
-        button.copy-btn:hover {
-            background-color: #36a420;
-        }
-        #results {
-            margin-top: 20px;
-        }
-        #itemCount, #comparisonSummary {
-            font-size: 1.1em;
-            font-weight: 500;
-            margin-bottom: 15px;
-        }
-        .comparison-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .diff-box {
-            border: 1px solid #dddfe2;
-            border-radius: 6px;
-            padding: 15px;
-        }
-        .diff-box h3 {
-            margin-top: 0;
-            font-size: 1em;
-        }
-        .diff-box ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            max-height: 250px;
-            overflow-y: auto;
+        /* Style for the results list items */
+        #addedItems li, #removedItems li {
+            padding: 4px 8px;
+            border-radius: 4px;
             font-family: monospace;
             font-size: 13px;
         }
-        .diff-box li {
-            padding: 4px;
-            border-radius: 3px;
+        #addedItems li {
+            background-color: #e6fdf5; /* green-50 */
+            color: #065f46; /* green-800 */
         }
-        .diff-box.added li { background-color: #e9f5e9; color: #36a420; }
-        .diff-box.removed li { background-color: #fbeae9; color: #e94f37; }
-        @media (max-width: 600px) {
-            .comparison-container {
-                grid-template-columns: 1fr;
-            }
+        #removedItems li {
+            background-color: #feefea; /* red-50 */
+            color: #991b1b; /* red-800 */
         }
     </style>
 </head>
-<body>
+<body class="text-gray-800">
 
     <nav class="bg-gray-800 text-white p-4 shadow-md">
         <div class="container mx-auto flex items-center gap-6">
-            <h1 class="text-xl font-bold">My Tools</h1>
-            <a href="index.html" class="text-gray-300 hover:text-white transition-colors">
+            <a href="index.html" class="text-xl font-bold hover:text-gray-300">My Tools (Home)</a>
+            <a href="key-generator.html" class="text-gray-300 hover:text-white transition-colors">
                 Key Generator
             </a>
             <a href="list-processor.html" class="font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
@@ -141,44 +42,71 @@
         </div>
     </nav>
 
-    <div class="page-wrapper">
-        <div class="container">
-            <h1>List Processor & Comparator</h1>
-
-            <label for="inputList">Paste your multi-line list here:</label>
-            <textarea id="inputList" placeholder="P2_devilsfingerVF&#10;SMG_10000WishesVT&#10;SMG_108HeroesWaterMarginVF..."></textarea>
+    <div class="bg-gray-50 min-h-screen"> 
+        <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
             
-            <div class="button-group">
-                <button id="processBtn">Process List</button>
-            </div>
+            <header class="text-center mb-8">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">List Processor & Comparator</h1>
+                <p class="mt-2 text-md text-gray-600">Process and compare multi-line lists.</p>
+            </header>
 
-            <div id="results" style="display: none;">
-                <h2>Results</h2>
-                <p id="itemCount">Total Items: 0</p>
-
-                <label for="outputList">Comma-Separated List:</label>
-                <textarea id="outputList" readonly></textarea>
-                <div class="button-group">
-                    <button id="copyBtn" class="copy-btn">Copy to Clipboard</button>
-                </div>
-
-                <h2>Comparison with Previous List</h2>
-                <p id="comparisonSummary">This is the first list processed.</p>
-                <div class="comparison-container">
-                    <div class="diff-box added">
-                        <h3>Items Added</h3>
-                        <ul id="addedItems"></ul>
+            <main>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <div>
+                        <label for="inputList" class="block text-sm font-medium text-gray-700">Paste your multi-line list here:</label>
+                        <textarea id="inputList" rows="10" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="P2_devilsfingerVF&#10;SMG_10000WishesVT&#10;SMG_108HeroesWaterMarginVF..."></textarea>
                     </div>
-                    <div class="diff-box removed">
-                        <h3>Items Removed</h3>
-                        <ul id="removedItems"></ul>
+                    
+                    <div class="mt-4">
+                        <button id="processBtn" class="w-full sm:w-auto bg-indigo-600 text-white font-semibold py-2 px-5 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ease-in-out shadow-sm">
+                            Process List
+                        </button>
                     </div>
                 </div>
-            </div>
+
+                <div id="results" class="hidden bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-8">
+                    
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Results</h3>
+                    
+                    <p id="itemCount" class="text-md font-medium text-gray-700 mb-4">Total Items: 0</p>
+
+                    <div>
+                        <label for="outputList" class="block text-sm font-medium text-gray-700">Comma-Separated List:</label>
+                        <textarea id="outputList" rows="5" readonly class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 font-mono text-sm"></textarea>
+                        <button id="copyBtn" class="mt-2 w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all text-sm">
+                            Copy to Clipboard
+                        </button>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t">
+                        <h3 class="text-lg font-semibold text-gray-800">Comparison with Previous List</h3>
+                        <p id="comparisonSummary" class="text-sm text-gray-600 mt-1 mb-4">This is the first list processed.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h4 class="font-semibold text-green-700">Items Added</h4>
+                                <ul id="addedItems" class="mt-2 space-y-1 h-48 overflow-y-auto p-2 bg-white border border-gray-200 rounded-md">
+                                    <li style="background: none; color: #6b7280;">None</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-red-700">Items Removed</h4>
+                                <ul id="removedItems" class="mt-2 space-y-1 h-48 overflow-y-auto p-2 bg-white border border-gray-200 rounded-md">
+                                    <li style="background: none; color: #6b7280;">None</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
         </div>
-    </div> <script>
+    </div> 
+
+    <script>
         let previousListItems = [];
 
+        // --- DOM Elements ---
         const processBtn = document.getElementById('processBtn');
         const copyBtn = document.getElementById('copyBtn');
         
@@ -191,14 +119,16 @@
         const addedItemsEl = document.getElementById('addedItems');
         const removedItemsEl = document.getElementById('removedItems');
 
+        // --- Functions ---
+        
         // Helper function to render a list of items into a <ul>
         function populateList(element, items) {
             element.innerHTML = ''; // Clear previous results
             if (items.length === 0) {
                 const li = document.createElement('li');
                 li.textContent = 'None';
-                li.style.backgroundColor = 'transparent';
-                li.style.color = '#606770';
+                li.style.background = 'none'; // Clear inline styles
+                li.style.color = '#6b7280'; // gray-500
                 element.appendChild(li);
             } else {
                 items.forEach(item => {
@@ -208,6 +138,8 @@
                 });
             }
         }
+        
+        // --- Event Listeners ---
         
         processBtn.addEventListener('click', () => {
             const rawText = inputListEl.value;
@@ -243,15 +175,21 @@
             previousListItems = currentListItems;
             
             // 6. Show the results section
-            resultsEl.style.display = 'block';
+            resultsEl.classList.remove('hidden'); // Use class instead of style
         });
 
         copyBtn.addEventListener('click', () => {
             if (outputListEl.value) {
                 navigator.clipboard.writeText(outputListEl.value).then(() => {
                     copyBtn.textContent = 'Copied!';
+                    // Use key generator's copy feedback style
+                    copyBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    copyBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    
                     setTimeout(() => {
                         copyBtn.textContent = 'Copy to Clipboard';
+                        copyBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                        copyBtn.classList.add('bg-green-600', 'hover:bg-green-700');
                     }, 2000);
                 }).catch(err => {
                     alert('Failed to copy text.');
